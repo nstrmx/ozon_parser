@@ -1,0 +1,8 @@
+*\.ignore
+client_secret_455291594172-kfjqu8f362vbgr2bq9mq50b401nr88cl.apps.googleusercontent.com.json
+token.json
+__pycache__
+*.pyc
+.vscode
+poetry.lock
+*.log
