@@ -6,7 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
-from settings import LOADING_TIMEOUT
+from settings import LOADING_TIMEOUT, Selector
 from utils import log
 
 
@@ -72,19 +72,6 @@ class Driver(webdriver.Firefox):
         return page_num_links
 
 
-    def xpath(self, path: str) -> Any:
-        return self.execute_script("""return {
-            var contextNode = document;
-            var nsResolver = document.createNSResolver( contextNode.ownerDocument == null ? contextNode.documentElement : contextNode.ownerDocument.documentElement );
-            var result = document.evaluate(%s, contextNode, nsResolver, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-            return result.iterateNext();
-        }
-        """ % path)
-        #return self.find_element(By.XPATH, path)
-
-
-    def xpath_all(self, path: str) -> Any:
-        return self.find_elements(By.XPATH, path)
 
 
 def main():

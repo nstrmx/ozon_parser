@@ -36,32 +36,29 @@ class Selector:
     xpath: str
     format: Callable
 
+    def __add__(self, other):
+        return Selector(xpath = self.xpath + other.xpath, format = other.format)
+
+product_card_xpath = """//div[starts-with(@data-widget, "megaPaginator")]//*[starts-with(@class, "widget-search-result-container")][1]/div[1]/div"""
+    
 SELECTORS = Namespace(
-    page = Namespace(
-        product_card = Selector(
-            xpath="""//div[starts-with(@data-widget, "megaPaginator")]//*[starts-with(@class, "widget-search-result-container")][1]/div[1]/div""",
-            format=lambda _: _ or ''
-        ),
-        page_num_links = Selector(
-            xpath="""//div[starts-with(@data-widget, "megaPaginator")]/div[2]//a/@href""",
-            format=str
-        ),
-    ),    
+
+    page_num_links = Selector(
+        xpath="""//div[starts-with(@data-widget, "megaPaginator")]/div[2]//a/@href""",
+        format=str
+    ),
+
     product = Namespace(
         title = Selector(
-            xpath = """//div[1]/a[starts-with(@class, "tile-hover-target")]//text()""",
+            xpath = product_card_xpath + """//a[starts-with(@class, "tile-hover-target")]//text()""",
             format=str
         ),
         old_price = Selector(
-            xpath="""//div[1]/div[1]/span[2]//text()""",
+            xpath = product_card_xpath + """//div[1]/div[1]/span[2]//text()""",
             format=str
         ),
         new_price = Selector(
-            xpath="""//div[1]/div[1]/span[1]//text()""",
-            format=str
-        ),
-        discount = Selector(
-            xpath="",
+            xpath = product_card_xpath + """//div[1]/div[1]/span[1]//text()""",
             format=str
         ),
     ),

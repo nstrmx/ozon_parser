@@ -1,4 +1,5 @@
-from typing import List, Optional
+from operator import le
+from typing import List, Optional, Union
 
 
 from dataclasses import dataclass
@@ -10,9 +11,11 @@ from bs4.element import Tag
 from bs4 import BeautifulSoup as Soup
 from lxml import etree
 from lxml.etree import XPathEvalError
+from selenium.webdriver.common.by import By
 
-from settings import SELECTORS, WARNING, ERROR
+from settings import SELECTORS, WARNING, ERROR, Selector
 from utils import exception_handler, default_handler, log
+from ozon_parser.driver import Driver
 
  
         
@@ -60,11 +63,11 @@ class ProductData:
 
 
 class Parser:
-
+    """
     def __init__(self, source: str, selectors: Namespace = SELECTORS.page):
         self.source = source
         self.selectors = selectors
-
+    """
 
     def get_html(self) -> Soup:
         return etree.HTML(self.source)
@@ -97,10 +100,59 @@ class Parser:
         return product_data_list
 
 
+    def xpath(self, source: Union[Driver, etree.Element, str], selector: Selector):
+        return self.xpath_with_lxml(source, selector)
+
+    
+    def xpath_with_driver(self, driver, selector):
+        value = driver.find_elements(By.XPATH, selector.xpath)
+        return selector.format(value)
+
+
+    def xpath_with_driver_js(self, driver, selector):
+        js = """return (
+        function () {
+            var contextNode = document;
+            var nsResolver = document.createNSResolver( contextNode.ownerDocument == null ? contextNode.documentElement : contextNode.ownerDocument.documentElement );
+            var result = document.evaluate(%s, contextNode, nsResolver, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+            return result.iterateNext();
+        })();
+        """ % selector.xpath
+        value = self.execute_script(js)
+        log(value)
+        return selector.format(value)
+
+    # add exception handler that returns default value
+    def xpath_with_lxml(self, html: Union[etree.Element, str], selector):
+        try:
+            if isinstance(html, str):
+                html = etree.HTML(html)
+            value = html.xpath(selector.xpath)
+            log(value)
+            return selector.format(value)
+        except Exception as e:
+            log(e, level=WARNING)
+            return selector.format()
+
+
+
 
 
 def main():
-    pass
+    from settings import WEBDRIVER_PATH, HEADLESS, SHOP_URL, SELECTORS
+
+    with Driver(executable_path=WEBDRIVER_PATH, headless=HEADLESS) as driver:
+
+        driver.get_url(SHOP_URL)
+        driver.scroll_to_bottom()
+
+        parser = Parser()
+
+        html = etree.HTML(driver.page_source)
+
+        parser.xpath(html, SELECTORS.product.title)
+        parser.xpath(html, SELECTORS.product.old_price)
+        parser.xpath(html, SELECTORS.product.new_price)
 
 
 
