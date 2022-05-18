@@ -17,32 +17,31 @@ from utils import log, response_printer
 def main():
 
     # Getting data from shop page
-    driver = Driver(executable_path=WEBDRIVER_PATH, headless=HEADLESS)
+    with Driver(executable_path=WEBDRIVER_PATH, headless=HEADLESS) as driver:
 
-    driver.get_url(SHOP_URL)
-    driver.scroll_to_bottom()
+        driver.get_url(SHOP_URL)
+        driver.scroll_to_bottom()
 
-    data: List[ProductData] = [] 
+        data: List[ProductData] = [] 
 
-    parser = Parser(driver.page_source)
-    items = parser.parse_page()
-    
-    data.extend(items)
+        parser = Parser(driver.page_source)
+        items = parser.parse_page()
+        
+        data.extend(items)
 
-    page_num_links = driver.get_next_pages(SELECTORS.page.page_num_links)
+        page_num_links = driver.get_next_pages(SELECTORS.page.page_num_links)
 
-    if len(page_num_links) > 1:
+        if len(page_num_links) > 1:
 
-        for i, link in enumerate(page_num_links[1:], 1):
-            driver.get_url(SHOP_URL + link)
-            driver.scroll_to_bottom()
-            
-            parser = Parser(driver.page_source)
-            items = parser.parse_page(i)
+            for i, link in enumerate(page_num_links[1:], 1):
+                driver.get_url(SHOP_URL + link)
+                driver.scroll_to_bottom()
+                
+                parser = Parser(driver.page_source)
+                items = parser.parse_page(i)
 
-            data.extend(items)
-            
-    driver.quit()
+                data.extend(items)
+
 
     table: List[List[str]] = []
     

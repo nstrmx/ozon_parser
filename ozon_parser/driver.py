@@ -20,15 +20,26 @@ class Driver(webdriver.Firefox):
                     headless: bool = True, 
                     options: Optional[Options] = None, 
                     **kwargs):
-        log(f"Starting webdriver" + " headless" if headless == True else '')
+        
+        self.__headless = headless
+        self.loading_timeout = loading_timeout
 
         if options is None:
             options = Options()
-            options.headless = headless
+            options.headless = self.__headless
 
         webdriver.Firefox.__init__(self, *args, options=options, **kwargs)
 
-        self.loading_timeout = loading_timeout
+
+    def __enter__(self):
+        log(f"Starting webdriver" + " in headless mode" if self.__headless == True else '')
+        return super().__enter__()
+
+
+    def __exit__(self, *args):
+        log(f"Closing webdriver")
+        self.quit()
+        return super().__exit__(*args)
 
     
     def get_url(self, url: str):
@@ -74,3 +85,25 @@ class Driver(webdriver.Firefox):
 
     def xpath_all(self, path: str) -> Any:
         return self.find_elements(By.XPATH, path)
+
+
+def main():
+    from settings import WEBDRIVER_PATH
+
+    with Driver(executable_path=WEBDRIVER_PATH) as driver:
+        driver.get_url("https://google.com")
+
+        n = 15
+
+        while n:
+            print(n)
+            time.sleep(1)
+            n -= 1
+            if n == 10:
+                1 / 0
+
+    print("Hello world")
+
+
+if __name__ == "__main__":
+    main()
