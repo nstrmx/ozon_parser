@@ -1,35 +1,74 @@
+from typing import Callable
+
 from argparse import Namespace
+from dataclasses import dataclass
+
+
+
 
 DEBUG = True
+LOGGING_ENABLED = True
+
 
 # utils.py
-VERBOSE_LOG = True
+## LOGGING
+LEVELS = ["INFO", "WARNING", "ERROR"]
+INFO = 0
+WARNING = 1
+ERROR = 2
+VERBOSITY_LEVEL = INFO
 
-# ozon_parser/parser.py
 
-## SELENIUM
+# ozon_parser/driver.py
+## DRIVER
 
 WEBDRIVER_PATH = "/home/ckr/.webdrivers_for_selenium/geckodriver"
-LOADING_TIMEOUT = 0.5
-
-## PARSER 
+HEADLESS = True
+LOADING_TIMEOUT = 0.75
 SHOP_URL = "https://www.ozon.ru/seller/skyfors-301871/products/?miniapp=seller_301871"
 
+
+# ozon_parser/parser.py
+## PARSER
+
+@dataclass
+class Selector:
+    xpath: str
+    format: Callable
+
 SELECTORS = Namespace(
-    product_card = ".widget-search-result-container > div > div",
-    product_data = Namespace(
-        title = "div.si > a.tile-hover-target.i3q > span.i3q > span",
-        old_price = "div.si > div.ui-s2 > span:nth-child(2)",
-        new_price = "div.si > div.ui-s2 > span:nth-child(1)",
-        discount = "section.q3i > div.i5q > div.qi5 > span:nth-child(1)",
+    page = Namespace(
+        product_card = Selector(
+            xpath="""//div[starts-with(@data-widget, "megaPaginator")]//*[starts-with(@class, "widget-search-result-container")][1]/div[1]/div""",
+            format=lambda _: _ or ''
+        ),
+        page_num_links = Selector(
+            xpath="""//div[starts-with(@data-widget, "megaPaginator")]/div[2]//a/@href""",
+            format=str
+        ),
+    ),    
+    product = Namespace(
+        title = Selector(
+            xpath = """//div[1]/a[starts-with(@class, "tile-hover-target")]//text()""",
+            format=str
+        ),
+        old_price = Selector(
+            xpath="""//div[1]/div[1]/span[2]//text()""",
+            format=str
+        ),
+        new_price = Selector(
+            xpath="""//div[1]/div[1]/span[1]//text()""",
+            format=str
+        ),
+        discount = Selector(
+            xpath="",
+            format=str
+        ),
     ),
-    page_numbers = "#layoutPage div[data-widget=megaPaginator] > div:nth-child(2) > div > div:nth-child(1) > div:nth-child(1) > a"
 )
 
 
-
 # ozon_parser/sheet.py
-
 ## SPREADSHEETS 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 CREDS_PATH = "credentials.json"
