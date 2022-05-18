@@ -8,22 +8,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from utils import hasmethod, log
-
-
-
-def response_wrapper(func):
-    def wrapper(*args, **kwargs) -> Optional[Any]:
-        try:
-            return func(*args, **kwargs)
-        except HttpError as http_error:
-            print(http_error)
-    return wrapper
+from utils import hasmethod, log, exception_handler, response_printer
 
 
 
 
 class Sheet:
+
     def __init__(self, sheets: Any, sheet_id):
         log("Initializing Sheet")
 
@@ -33,32 +24,60 @@ class Sheet:
         else:
             raise Exception("Invalid 'sheets' parameter. Sheets must have 'values' method.")
 
-    @response_wrapper
+
+    @exception_handler(HttpError)
     def get_range(self, sheet_range: str, dimension: str = "ROWS"):
-        log(f"Getting data in range {sheet_range} as {dimension}")
+        log(f"Getting range {sheet_range} as {dimension}")
 
-        return self.values().get(
-            spreadsheetId = self.sheet_id,
-            range = f"{sheet_range}",
-            majorDimension = dimension
-        ).execute()
+        response =  self.values() \
+                        .get(spreadsheetId = self.sheet_id,
+                            range = f"{sheet_range}",
+                            majorDimension = dimension) \
+                        .execute()
 
-    @response_wrapper
+        log(response, printer=response_printer)
+        return response
+
+
+    @exception_handler(HttpError)
     def batch_update(self, sheet_range: str, values: List[List[str]]):
-        log(f"Updating data in range {sheet_range}")
+        log(f"Updating range {sheet_range}")
 
         data = [{"values": values, "range": f"{sheet_range}"}]
         body = {"valueInputOption": "USER_ENTERED", "data": data}
-        return self.values().batchUpdate(spreadsheetId=self.sheet_id, body=body).execute()
+        
+        response =  self.values() \
+                        .batchUpdate(spreadsheetId=self.sheet_id, 
+                                 body=body) \
+                        .execute()
+
+        log(response, printer=response_printer)
+        return response
+
+
+    @exception_handler(HttpError)
+    def clear_range(self, sheet_range):
+        log(f"Clearing range {sheet_range}")
+        
+        response =  self.values() \
+                        .clear(spreadsheetId=self.sheet_id, 
+                               range = sheet_range,
+                               body = {}) \
+                        .execute( )
+
+        log(response, printer=response_printer)
+        return response
 
 
 
 
 class GoogleService:
+
     def __init__(self, creds_path: str, scopes: List[str]):
         log("Initializing GoogleService")
 
         self.creds = self.connect(creds_path, scopes)
+
 
     def connect(self, creds_path: str, scopes: List[str]) -> Optional[Credentials]:
         log("Connecting to google service")
@@ -90,6 +109,7 @@ class GoogleService:
                 token.write(creds.to_json())
 
         return creds
+
 
     def build_sheets(self, api_version, sheet_id, *args, **kwargs) -> Sheet:
         log(f"Building sheets {api_version} with id={sheet_id}")

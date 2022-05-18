@@ -4,7 +4,7 @@ token.json
 __pycache__
 *.pyc
 .vscode
-poetry.lock
 *.log
 todo.md
 credentials.json
+poetry.lock

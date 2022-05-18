@@ -11,6 +11,8 @@ bs4 = "^0.0.1"
 google-api-python-client = "^2.47.0"
 google-auth-httplib2 = "^0.1.0"
 google-auth-oauthlib = "^0.5.1"
+mypy = "^0.950"
+lxml = "^4.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
