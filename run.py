@@ -1,5 +1,4 @@
-#from ozon_parser.main import main
-from ozon_parser.parser import main
+from ozon_parser.main import main
 
 
 
@@ -7,3 +6,7 @@ from ozon_parser.parser import main
 if __name__ == "__main__":
     
     main()
+
+
+# TODO: fix exception handler
+# TODO: merge changes in exception handler with mylib

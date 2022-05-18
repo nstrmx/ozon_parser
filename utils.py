@@ -16,6 +16,8 @@ ExceptionArgs = NewType('ExceptionArgs', Tuple[Exception])
 ExceptionHandler = Callable[[ExceptionArgs, str], Any]
 
 
+
+
 def partial_wrapper(*part_args, **part_kwargs):
     def wrapper_func(func):
         return partial(func, *part_args, **part_kwargs)

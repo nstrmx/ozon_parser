@@ -5,6 +5,6 @@ __pycache__
 *.pyc
 .vscode
 *.log
-todo.md
+TODO
 credentials.json
 poetry.lock

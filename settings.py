@@ -31,35 +31,41 @@ SHOP_URL = "https://www.ozon.ru/seller/skyfors-301871/products/?miniapp=seller_3
 # ozon_parser/parser.py
 ## PARSER
 
+def bypass(_): return _
+
 @dataclass
 class Selector:
     xpath: str
-    format: Callable
+    handle: Callable
 
     def __add__(self, other):
-        return Selector(xpath = self.xpath + other.xpath, format = other.format)
+        return Selector(xpath = self.xpath + other.xpath, handle = other.handle)
 
-product_card_xpath = """//div[starts-with(@data-widget, "megaPaginator")]//*[starts-with(@class, "widget-search-result-container")][1]/div[1]/div"""
+product_card_xpath = "//div[starts-with(@data-widget, 'megaPaginator')]//*[starts-with(@class, 'widget-search-result-container')][1]/div[1]/div"
     
 SELECTORS = Namespace(
 
     page_num_links = Selector(
-        xpath="""//div[starts-with(@data-widget, "megaPaginator")]/div[2]//a/@href""",
-        format=str
+        xpath="//div[starts-with(@data-widget, 'megaPaginator')]/div[2]//a/@href",
+        handle=bypass
     ),
 
     product = Namespace(
         title = Selector(
-            xpath = product_card_xpath + """//a[starts-with(@class, "tile-hover-target")]//text()""",
-            format=str
+            xpath = product_card_xpath + "//a[starts-with(@class, 'tile-hover-target')]//text()",
+            handle=bypass
         ),
         old_price = Selector(
-            xpath = product_card_xpath + """//div[1]/div[1]/span[2]//text()""",
-            format=str
+            xpath = product_card_xpath + "//div[1]/div[1]/span[contains(text(), '₽')][1]//text()",
+            handle=bypass
         ),
         new_price = Selector(
-            xpath = product_card_xpath + """//div[1]/div[1]/span[1]//text()""",
-            format=str
+            xpath = product_card_xpath + "//div[1]/div[1]/span[contains(text(), '₽')][2]//text()",
+            handle=bypass
+        ),
+        discount = Selector(
+            xpath = product_card_xpath + "//div[1]/div[1]/span[contains(text(), '%')]//text()",
+            handle=bypass
         ),
     ),
 )

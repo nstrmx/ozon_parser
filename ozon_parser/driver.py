@@ -62,16 +62,6 @@ class Driver(webdriver.Firefox):
             new_scroll_height = self.execute_script("return document.body.scrollHeight;")
 
 
-    def get_next_pages(self, xpath_selector) -> List[str]:
-        log("Getting number of pages")
-
-        page_num_links = self.xpath_all(xpath_selector)
-        page_num_links = [*map(self.selectors.page_num_links.format, page_num_links)] 
-        
-        log(f"{len(page_num_links)} pages to walk through")
-        return page_num_links
-
-
 
 
 def main():

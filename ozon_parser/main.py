@@ -2,34 +2,34 @@ from typing import List
 
 from datetime import datetime
 from string import ascii_uppercase as abc
-from pprint import pprint
+from lxml.etree import HTML
 
 from ozon_parser.driver import Driver
 from ozon_parser.sheets import GoogleService
 from ozon_parser.parser import Parser, ProductData
 
 from settings import CREDS_PATH, HEADLESS, SCOPES, SELECTORS, WARNING, WEBDRIVER_PATH, SHEET_ID, SHEETS_API_VERSION, SHOP_URL
-from utils import log, response_printer
+from utils import log
 
 
 
 
 def main():
 
-    # Getting data from shop page
+    # Getting html from shop pages
     with Driver(executable_path=WEBDRIVER_PATH, headless=HEADLESS) as driver:
 
         driver.get_url(SHOP_URL)
         driver.scroll_to_bottom()
 
-        data: List[ProductData] = [] 
+        html_pages = []
 
-        parser = Parser(driver.page_source)
-        items = parser.parse_page()
-        
-        data.extend(items)
+        page = HTML(driver.page_source)
+        html_pages.append(page)
 
-        page_num_links = driver.get_next_pages(SELECTORS.page.page_num_links)
+        parser = Parser()
+
+        page_num_links = parser.get_next_pages(page, SELECTORS.page_num_links)
 
         if len(page_num_links) > 1:
 
@@ -37,11 +37,26 @@ def main():
                 driver.get_url(SHOP_URL + link)
                 driver.scroll_to_bottom()
                 
-                parser = Parser(driver.page_source)
-                items = parser.parse_page(i)
+                page = HTML(driver.page_source)
+                html_pages.append(page)
 
-                data.extend(items)
 
+    # Parsing product cards
+
+    data: List[ProductData] = []
+
+    for page in html_pages:
+
+        titles     = parser.xpath(page, SELECTORS.product.title)
+        old_prices = parser.xpath(page, SELECTORS.product.old_price)
+        new_prices = parser.xpath(page, SELECTORS.product.new_price)
+        discount   = parser.xpath(page, SELECTORS.product.discount)
+
+        for values in zip(titles, old_prices, new_prices, discount):
+            data.append(ProductData(values, SELECTORS.product))
+
+
+    # Formatting data for google sheets
 
     table: List[List[str]] = []
     
@@ -56,6 +71,7 @@ def main():
 
 
     # Adding data to google sheets
+    
     service = GoogleService(CREDS_PATH, SCOPES)
     sheets = service.build_sheets(SHEETS_API_VERSION, SHEET_ID)
 
@@ -69,7 +85,6 @@ def main():
     sheets.batch_update(sheet_range, table)
     
     sheets.get_range(sheet_range)
-
 
 
 
