@@ -2,6 +2,8 @@ from typing import List
 
 from datetime import datetime
 from string import ascii_uppercase as abc
+from itertools import zip_longest
+
 from lxml.etree import HTML
 
 from ozon_parser.driver import Driver
@@ -52,7 +54,7 @@ def main():
         new_prices = parser.xpath(page, SELECTORS.product.new_price)
         discount   = parser.xpath(page, SELECTORS.product.discount)
 
-        for values in zip(titles, old_prices, new_prices, discount):
+        for values in zip_longest(titles, old_prices, new_prices, discount, fillvalue=''):
             data.append(ProductData(values, SELECTORS.product))
 
 
@@ -71,7 +73,7 @@ def main():
 
 
     # Adding data to google sheets
-    
+
     service = GoogleService(CREDS_PATH, SCOPES)
     sheets = service.build_sheets(SHEETS_API_VERSION, SHEET_ID)
 

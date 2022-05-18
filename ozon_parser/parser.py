@@ -25,7 +25,10 @@ class ProductData:
     def __init__(self, values: Tuple, selectors: Namespace):
         
         for key, value in zip(selectors.__dict__.keys(), values):
-            setattr(self, key, value)
+            if len(value) > 0:
+                setattr(self, key, value)
+            else:
+                setattr(self, key, value)
 
 
     def __str__(self):
@@ -93,7 +96,7 @@ class Parser:
         return product_data_list
 
 
-    def xpath(self, source: Union[Driver, etree.Element, str], selector: Selector):
+    def xpath(self, source: Union[Driver, Element, str], selector: Selector):
         return self.xpath_with_lxml(source, selector)
 
     
@@ -103,10 +106,10 @@ class Parser:
 
 
     # TODO: add exception handler that returns default value
-    def xpath_with_lxml(self, html: Union[etree.Element, str], selector):
+    def xpath_with_lxml(self, html: Union[Element, str], selector):
         try:
             if isinstance(html, str):
-                html = etree.HTML(html)
+                html = HTML(html)
             value = html.xpath(selector.xpath)
             log(value)
             return selector.handle(value)
@@ -128,7 +131,7 @@ def main():
 
         parser = Parser()
 
-        html = etree.HTML(driver.page_source)
+        html = HTML(driver.page_source)
 
         parser.xpath(html, SELECTORS.product.title)
         parser.xpath(html, SELECTORS.product.old_price)
