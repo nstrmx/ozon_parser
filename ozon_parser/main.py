@@ -32,7 +32,6 @@ def main():
         html_pages.append(page)        
 
         log("Getting number of pages")
-        
         page_num_links = parser.xpath(page, SELECTORS.page_num_links)
         
         if len(page_num_links) > 1:
