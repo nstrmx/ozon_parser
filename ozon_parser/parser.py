@@ -26,6 +26,8 @@ def xpath_handler(exception: Exception, _1, _2, selector, *args, **kwargs) -> An
     return selector.handle()
 
 
+
+
 @dataclass
 class ProductData:
 

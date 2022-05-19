@@ -38,8 +38,6 @@ def main():
         if len(page_num_links) > 1:
             log(f"{len(page_num_links)} pages to walk through")
 
-        if len(page_num_links) > 1:
-
             for i, link in enumerate(page_num_links[1:], 1):
                 driver.get_url(SHOP_URL + link)
                 driver.scroll_to_bottom()
