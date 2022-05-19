@@ -8,6 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from settings import DATA
 from utils import hasmethod, log, exception_handler, response_printer
 
 
@@ -15,7 +16,7 @@ from utils import hasmethod, log, exception_handler, response_printer
 
 class Sheet:
 
-    def __init__(self, sheets: Any, sheet_id):
+    def __init__(self, sheets: Any, sheet_id: str):
         log("Initializing Sheet")
 
         self.sheet_id = sheet_id
@@ -35,11 +36,11 @@ class Sheet:
                             majorDimension = dimension) \
                         .execute()
 
-        log(response, printer=response_printer)
+        log(response, level=DATA, printer=response_printer)
         return response
 
 
-    @exception_handler(HttpError)
+    @exception_handler(exception=HttpError)
     def batch_update(self, sheet_range: str, values: List[List[str]]):
         log(f"Updating range {sheet_range}")
 
@@ -51,11 +52,11 @@ class Sheet:
                                  body=body) \
                         .execute()
 
-        log(response, printer=response_printer)
+        log(response, level=DATA, printer=response_printer)
         return response
 
 
-    @exception_handler(HttpError)
+    @exception_handler(exception=HttpError)
     def clear_range(self, sheet_range):
         log(f"Clearing range {sheet_range}")
         
@@ -65,7 +66,7 @@ class Sheet:
                                body = {}) \
                         .execute( )
 
-        log(response, printer=response_printer)
+        log(response, level=DATA, printer=response_printer)
         return response
 
 
@@ -91,7 +92,7 @@ class GoogleService:
             creds = Credentials.from_authorized_user_file('token.json', scopes)
 
         # If there are no (valid) credentials available, let the user log in.
-        if creds == None or creds.valid == False:
+        if creds == None or (hasattr(creds, "valid") and creds.valid == False):
             log("Generating new credentials")
 
             if creds and creds.expired and creds.refresh_token:
@@ -118,6 +119,8 @@ class GoogleService:
 
         if hasmethod(service, "spreadsheets"):
             return Sheet(service.spreadsheets(), sheet_id)
+        else:
+            raise Exception("Something went wrong while building sheets")
 
 
 

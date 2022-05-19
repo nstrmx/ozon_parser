@@ -1,44 +1,21 @@
-from typing import Any, Union, Optional, List, Tuple, Dict, Callable, NewType
+from typing import Any, Type, List, Callable
 from types import FunctionType
 
 from datetime import datetime
-from functools import partial
-from argparse import Namespace
 from pprint import pprint
 
-from settings import LOGGING_ENABLED, LEVELS, INFO, ERROR, VERBOSITY_LEVEL
+from settings import INFO, LOGGING_ENABLED, LEVELS, ERROR, VERBOSITY_LEVEL
 
 
 
 
-types = Namespace()
-ExceptionArgs = NewType('ExceptionArgs', Tuple[Exception])
-ExceptionHandler = Callable[[ExceptionArgs, str], Any]
-
-
-
-
-def partial_wrapper(*part_args, **part_kwargs):
-    def wrapper_func(func):
-        return partial(func, *part_args, **part_kwargs)
-    return wrapper_func
-
-
-
-def __log(*args,
-        enabled: bool       = True, 
-        levels: List[str]   = [],
-        level: int          = 0,
-        verbosity: int      = 0,
+def log(*args,
+        enabled: bool       = LOGGING_ENABLED, 
+        levels: List[str]   = LEVELS,
+        level: int          = INFO,
+        verbosity: int      = VERBOSITY_LEVEL,
         printer: Callable   = print,
         **kwargs):
-    """
-    parameters
-        level: indicates given level of a log message
-        verbosity: only messages with given (and higher) verbosity level will be displayed
-        levels: list of log level names to work with
-        debug: enables/disables logging
-    """
 
     if enabled == True:
         if level >= verbosity:
@@ -46,27 +23,31 @@ def __log(*args,
             printer(*args, **kwargs)
 
 
-def log(*args, **kwargs):
-    return __log(*args, 
-                 enabled = LOGGING_ENABLED, 
-                 verbosity = VERBOSITY_LEVEL, 
-                 levels = LEVELS, 
-                 **kwargs)
-
-
 def hasmethod(obj: Any, method_name: str) -> bool:
     return hasattr(obj, method_name) and callable(getattr(obj, method_name))
     
 
-def default_handler(exception: Exception, message: str) -> Any:
-    exception_name = str(exception)
-    log(f"({exception_name})", message, level=ERROR)
+def default_handler(exception: Exception, *args, **kwargs) -> Any:
+    name = type(exception).__name__
+    log(f"({name})", str(exception), level=ERROR)
 
 
-def exception_handler(exception: Union[Exception, FunctionType] = Exception, 
-                      handler: ExceptionHandler = default_handler) -> Callable:
+def exception_handler(*args, 
+                      exception: Type[Exception] = Exception, 
+                      handler: Callable = default_handler) -> Callable:
 
-    __func: FunctionType = lambda *args, **kwargs: None
+    __func = lambda *args, **kwargs: None
+    
+    flag_skip = False
+
+    # TODO: add more suitable callable types
+    if len(args) > 0 and isinstance(args[0], FunctionType):
+        __func = args[0]
+        flag_skip = True
+    elif len(args) > 1 and isinstance(args[1], FunctionType):
+        __func = args[1]
+        flag_skip = True
+
 
     def wrapper_proc(*args, **kwargs) -> Any:
         nonlocal exception
@@ -75,22 +56,16 @@ def exception_handler(exception: Union[Exception, FunctionType] = Exception,
         try:
             return __func(*args, **kwargs)
         except exception as e:
-            return handler(exception, e, *args, **kwargs)
+            return handler(e, *args, **kwargs)
             
 
-    def wrapper_func(func: Callable) -> FunctionType:
+    def wrapper_func(func: Callable) -> Callable:
         nonlocal __func
 
         __func = func
         return wrapper_proc
         
-    
-    if isinstance(exception, FunctionType):
-        __func = exception
-        exception = Exception
-        return wrapper_proc
-
-    return wrapper_func
+    return wrapper_proc if flag_skip else wrapper_func
 
 
 def response_printer(*args, **kwargs):

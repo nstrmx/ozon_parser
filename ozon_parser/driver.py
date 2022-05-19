@@ -1,12 +1,11 @@
-from typing import Any, List, Optional
+from typing import Optional
 
 import time
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
 
-from settings import LOADING_TIMEOUT, Selector
+from settings import LOADING_TIMEOUT
 from utils import log
 
 
@@ -65,21 +64,7 @@ class Driver(webdriver.Firefox):
 
 
 def main():
-    from settings import WEBDRIVER_PATH
-
-    with Driver(executable_path=WEBDRIVER_PATH) as driver:
-        driver.get_url("https://google.com")
-
-        n = 15
-
-        while n:
-            print(n)
-            time.sleep(1)
-            n -= 1
-            if n == 10:
-                1 / 0
-
-    print("Hello world")
+    pass
 
 
 if __name__ == "__main__":

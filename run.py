@@ -8,5 +8,5 @@ if __name__ == "__main__":
     main()
 
 
-# TODO: fix exception handler
 # TODO: merge changes in exception handler with mylib
+# TODO: add tests

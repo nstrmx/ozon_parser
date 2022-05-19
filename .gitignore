@@ -1,10 +1,10 @@
-*\.ignore
-client_secret_455291594172-kfjqu8f362vbgr2bq9mq50b401nr88cl.apps.googleusercontent.com.json
-token.json
-__pycache__
-*.pyc
 .vscode
+.pytype
+__pycache__
+*.ignore
+credentials.json
+token.json
+*.pyc
 *.log
 TODO
-credentials.json
 poetry.lock

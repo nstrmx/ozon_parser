@@ -10,7 +10,7 @@ from ozon_parser.driver import Driver
 from ozon_parser.sheets import GoogleService
 from ozon_parser.parser import Parser, ProductData
 
-from settings import CREDS_PATH, HEADLESS, SCOPES, SELECTORS, WARNING, WEBDRIVER_PATH, SHEET_ID, SHEETS_API_VERSION, SHOP_URL
+from settings import CREDS_PATH, DATA, HEADLESS, SCOPES, SELECTORS, WARNING, WEBDRIVER_PATH, SHEET_ID, SHEETS_API_VERSION, SHOP_URL
 from utils import log
 
 
@@ -24,14 +24,19 @@ def main():
         driver.get_url(SHOP_URL)
         driver.scroll_to_bottom()
 
+        parser = Parser()
+        
         html_pages = []
 
-        page = HTML(driver.page_source)
-        html_pages.append(page)
+        page = parser.get_html(driver.page_source)
+        html_pages.append(page)        
 
-        parser = Parser()
-
-        page_num_links = parser.get_next_pages(page, SELECTORS.page_num_links)
+        log("Getting number of pages")
+        
+        page_num_links = parser.xpath(page, SELECTORS.page_num_links)
+        
+        if len(page_num_links) > 1:
+            log(f"{len(page_num_links)} pages to walk through")
 
         if len(page_num_links) > 1:
 
@@ -63,7 +68,7 @@ def main():
     table: List[List[str]] = []
     
     for i, item in enumerate(data, 1):
-        log(item)
+        log(item, level=DATA)
         row = [str(i), *item.get_values(), str(datetime.now())]
         table.append(row)
 
