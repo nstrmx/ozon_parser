@@ -1,95 +1,81 @@
-from typing import Any, List, Tuple, Type, Union
-
+from typing import List, Generator
+import re
+import logging
 from dataclasses import dataclass
-from argparse import Namespace
+from bs4 import BeautifulSoup
+from ozon_parser import selectors
 
-from lxml.etree import HTML
-from selenium.webdriver.common.by import By
 
-from settings import DATA, Selector
-from utils import exception_handler, default_handler, log
-from ozon_parser.driver import Driver
-
+log = logging.getLogger("default")
  
-
-# dirty patch to resolve pytype [import-error]     
-element = HTML("<html></html>")
-Element = type(element)
-try:
-    element.xpath("")
-except Exception as e:
-    XPathEvalError = type(e)
-
-
-def xpath_handler(exception: Exception, _1, _2, selector, *args, **kwargs) -> Any:
-    default_handler(exception)
-    return selector.handle()
-
-
-
 
 @dataclass
 class ProductData:
-
-    def __init__(self, values: Tuple, selectors: Namespace):
-        
-        for key, value in zip(selectors.__dict__.keys(), values):
-            if len(value) > 0:
-                setattr(self, key, value)
-            else:
-                setattr(self, key, value)
-
-
-    def __str__(self):
-        body = []
-        for key, value in self.__dict__.items():
-            body.append(f"{key} = {value}")
-
-        return "ProductData(" + (", ".join(body)) + ")"    
-
+    title: str
+    old_price: int
+    new_price: int
+    discount: float
 
     def get_values(self) -> List[str]:
         return list(self.__dict__.values())
 
-
-    def is_empty(self) -> bool:
-        return len(self.get_values()) == 0
-
-
-
-
 class Parser:
+    def parse_tree(self, source: str) -> BeautifulSoup:
+        return BeautifulSoup(source, "html.parser")
+
+    def select_int(self, tree: BeautifulSoup, selector: str, default: int = 0) -> int:
+        try:
+            tag = tree.select_one(selector)
+            val = re.sub(r"[^0-9]+", "", tag.text)
+            return int(val)
+        except (AttributeError, ValueError, IndexError) as e:
+            log.error("error parsing selector %s: %s" % (selector, e))
+            return default
+        
+    def select_str(self, tree: BeautifulSoup, selector: str, default: str = "") -> str:
+        try:
+            tag = tree.select_one(selector)
+            val = tag.text.strip()
+            return val
+        except (AttributeError, ValueError) as e:
+            log.error("error parsing selector %s: %s" % (selector, e))
+            return default
+
+    def select_href(self, tree: BeautifulSoup, selector: str, default: str = "") -> str:
+        try:
+            tag = tree.select_one(selector)
+            href = tag.get("href")
+            return href
+        except (AttributeError, ValueError) as e:
+            log.error("error parsing selector %s: %s" % (selector, e))
+            return default
+
+    def parse_page(self, tree: BeautifulSoup) -> Generator[ProductData, None, None]:
+        product_items = tree.select(selectors.product_items)
+        num_of_products = len(product_items)
+        if num_of_products == 0:
+            return
+        for i in range(1, num_of_products+1):
+            product_data = ProductData(
+                title=self.select_str(tree, selectors.title % i), 
+                old_price=self.select_int(tree, selectors.old_price % i), 
+                new_price=self.select_int(tree, selectors.new_price % i),
+                discount=self.select_int(tree, selectors.discount % i) / 100,    
+            )
+            yield product_data
     
-    def get_html(self, source) -> Type[Element]:
-        return HTML(source)
-
-
-    def xpath(self, source: Union[Driver, Element, str], selector: Selector):
-        return self.xpath_with_lxml(source, selector)
-
-    
-    def xpath_with_driver(self, driver, selector):
-        value = driver.find_elements(By.XPATH, selector.xpath)
-        log(value, level=DATA)
-        return selector.handle(value)
-
-
-    @exception_handler(exception=XPathEvalError, handler=xpath_handler)
-    def xpath_with_lxml(self, html: Union[Element, str], selector):
-        if isinstance(html, str):
-            html = self.get_html(html)
-        value = html.xpath(selector.xpath)
-        log(value, level=DATA)
-        return selector.handle(value)
-
-
-
-
-def main():
-    pass
-
-
-
-
-if __name__ == "__main__":
-    main()
+    def generate(self, page_itr: Generator[str, str, None]) -> Generator[ProductData, None, None]:
+        try:
+            page = next(page_itr)
+        except StopIteration:
+            return
+        while True:
+            tree = self.parse_tree(page)
+            yield from self.parse_page(tree)
+            next_page_link = self.select_href(tree, selectors.next_page)
+            if not next_page_link:
+                break
+            m = re.search(r"(\?page=\d+)$", next_page_link)
+            if m:
+                page = page_itr.send(m.group())
+            
