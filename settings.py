@@ -59,7 +59,6 @@ logging_config.dictConfig(LOGGING_CONFIG)
 WEBDRIVER_PATH = "/home/ckr/.webdrivers_for_selenium/geckodriver"
 HEADLESS = True
 LOADING_TIMEOUT = 0.75
-# SHOP_URL = "https://www.ozon.ru/seller/skyfors-301871/products/?miniapp=seller_301871"
 SHOP_URL = "https://www.ozon.ru/brand/3q-25219578/category/elektronika-15500"
 
 # PARSER
