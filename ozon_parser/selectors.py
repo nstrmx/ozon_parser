@@ -1,15 +1,8 @@
-from typing import List,Callable
-
-from dataclasses import dataclass
-
-
-
-
-def bypass(_: List = []) -> List: 
-    return _
-
-
-@dataclass
-class Selector:
-    xpath: str
-    handle: Callable
+next_page = "[data-widget=megaPaginator]>div:nth-child(2)>div:first-child>div:first-child>div:nth-child(2)>a"
+product_items = ".widget-search-result-container>div:first-child>div"
+product_item = product_items + ":nth-child(%s)"
+title = product_item + ">div:nth-child(2)>div>a"
+price = product_item + ">div:nth-child(3)>div:first-child>div:first-child"
+old_price = price + ">span:nth-child(2)"
+new_price = price + ">span:nth-child(1)"
+discount = price + ">span:nth-child(3)"

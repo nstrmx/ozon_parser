@@ -1,5 +1,6 @@
 .vscode
 .pytype
+.venv*/
 __pycache__
 *.ignore
 credentials.json
